@@ -265,7 +265,7 @@
 
         }
 
-        #again {
+        #gameopver>a {
 
             display: inline-block;
 
@@ -415,7 +415,7 @@
 
             init: function () {
 
-                obj.eleFragment = ducument.createDocumentFragment();
+                obj.eleFragment = document.createDocumentFragment();
 
                 for (r = 0; r < obj.ROW; r++) {
 
@@ -464,21 +464,21 @@
 
                 var grid, cell;
 
-                var increment = 14;
+                var increment = 14,
 
-                grWidth, grHeight, grMarginTop, grMarginLeft, ceWidth, ceHight;
+                    grWidth, grHeight, grMarginTop, grMarginLeft, ceWidth, ceHight;
 
-                grid = document.createElement('div');
+                grid = document.createElement("div");
 
-                grid = document.createElement('div');
+                cell = document.createElement("div");
 
                 grid.id = 'g' + r + c;
 
-                gird.className = 'grid';
+                grid.className = 'grid';
 
                 cell.id = 'c' + r + c;
 
-                cekk.className = 'cell';
+                cell.className = 'cell';
 
                 if (obj.ROW == 3) {
 
@@ -609,29 +609,29 @@
                     $('Score').innerHTML = '失败了<br>分数：' + obj.score;
 
                     console.log('gameover');
-                    
+
                 }
-          
+
             },
 
             //游戏失败
 
-            isGameOver: function() {
-                
-                for (r = 0; r< obj.ROW; r++) {
+            isGameOver: function () {
 
-                    for(c = 0; c<obj.CELL; c++) {
+                for (r = 0; r < obj.ROW; r++) {
 
-                        if(arr[r][c] == 0) {//只要有0,游戏不失败
+                    for (c = 0; c < obj.CELL; c++) {
+
+                        if (arr[r][c] == 0) { //只要有0,游戏不失败
 
                             return false;
-                        
+
                         } else if (c != obj.CELL - 1 && arr[r][c] == arr[r][c + 1]) { //左往右  前一个和下一个不相等
 
                             return false;
 
-                        } else if (r != obj.ROW - 1 && arr[r][c] == arr[r + 1][c] ){ //上往下 上一个和下一个不相等
-                            
+                        } else if (r != obj.ROW - 1 && arr[r][c] == arr[r + 1][c]) { //上往下 上一个和下一个不相等
+
                             return false;
 
                         }
@@ -641,21 +641,61 @@
                 }
 
                 return true;
-                
+
             },
 
-            find: function(r, c, start, condition, durection) {
+            find: function (r, c, start, condition, direction) {
 
-                if(obj.keyCd == 2) {//上下按键
+                if (obj.keyCd == 2) { //上下按键
 
-                    if(direction == 1) {//向上按键 f++
+                    if (direction == 1) { //向上按键 f++
 
-                        for(var f = start; f< conditon; f += direction) {
+                        for (var f = start; f < conditon; f += direction) {
 
-                            if(arr[f][c] != 0) {
+                            if (arr[f][c] != 0) {
 
                                 return f;
-                                
+
+                            }
+
+                        }
+
+                    } else { //向下按键 f--
+
+                        for (var f = start; f >= condition; f += direction) {
+
+                            if (arr[f][c] != 0) {
+
+                                return f;
+
+                            }
+
+                        }
+
+                    }
+
+                } else { //左右按键
+
+                    if (direction == 1) { //左按键 f++
+
+                        for (var f = start; f < condition; f += direction) {
+
+                            if (arr[r][f] != 0) {
+
+                                return f;
+
+                            }
+
+                        }
+
+                    } else { //右按键 f--
+
+                        for (var f = start; f >= condition; f += direction) {
+
+                            if (arr[r][f] != 0) {
+
+                                return f;
+
                             }
 
                         }
@@ -663,6 +703,279 @@
                     }
 
                 }
+
+                return null; //循环结束仍然没有找到！=0的数值，返回null
+
+            },
+
+            //左按键处理
+
+            dealToLeft: function (r) {
+
+                var next;
+
+                for (c = 0; c < obj.ROW; c++) {
+
+                    next = obj.find(r, c, c + 1, obj.CELL, 1); //找出第一个不为0的位置
+
+                    if (next == null) break; //没有找到就返回
+
+                    //如果当前位置为0
+
+                    if (arr[r][c] == 0) {
+
+                        arr[r][c] = arr[r][next]; //把找到的不为0的数值替换为当前位置的值
+
+                        arr[r][next] = 0; //找到的位置淸0
+
+                        c--; //再多循环一次，查看后面是否有值与替换后的值相同
+
+                    } else if (arr[r][c] == arr[r][next]) {
+
+                        arr[r][c] *= 2;
+
+                        arr[r][next] = 0;
+
+                        obj.score += arr[r][c];
+
+                    }
+
+                }
+
+            },
+
+            move: function (itertor) {
+
+                var before, //处理前
+
+                    after; //处理后
+
+                before = arr.toString();
+
+                itertor();
+
+                after = arr.toString();
+
+                if (before != after) { //前后对比，如果不同就upDate
+
+                    obj.random();
+
+                    obj.updateView();
+
+                }
+
+            },
+
+            moveLeft: function () {
+
+                obj.move(function () {
+
+                    for (r = 0; r < obj.ROW; r++) {
+
+                        obj.dealToLeft(r);
+
+                    }
+
+                })
+
+            },
+
+            //右按键处理
+
+            dealToRight: function () {
+
+                var next;
+
+                for (c = obj.CELL - 1; c >= 0; c--) {
+
+                    next = obj.find(r, c, c - 1, 0, -1); //找出第一个不为0的位置
+
+                    if (next == null) break; //没有找到就返回
+
+                    //如果当前位置为0
+
+                    if (arr[r][c] == 0) {
+
+                        arr[r][c] == arr[r][next]; //把找到的不为0的数值替换为当前位置的值
+
+                        arr[r][next] == 0; //找到的位置淸0 
+
+                        c++; //再多循环一次，查看后面是否有值与替换的值相同
+
+                    } else if (arr[r][c] == arr[r][next]) {
+
+                        arr[r][c] *= 2;
+
+                        arr[r][next] = 0;
+
+                        obj.score += arr[r][c];
+
+                    }
+
+                }
+
+            },
+
+            moveRight: function () {
+
+                obj.move(function () {
+
+                    for (r = 0; r < obj.ROW; r++) {
+
+                        obj.dealToRight(r);
+
+                    }
+
+                })
+
+            },
+
+            //上按键处理
+
+            dealToUp: function () {
+
+                var next;
+
+                for (r = 0; r < obj.ROW; r++) {
+
+                    next = obj.find(r, c, r + 1, obj.ROW, 1); //找出下一个不为0的位置
+
+                    if (next == null) break;
+
+                    //如果当前位置为0
+
+                    if (arr[r][c] == 0) {
+
+                        arr[r][c] = arr[next][c]; //把找到的不为0的数值替换为当前位置的值
+
+                        arr[next][c] = 0; //找到的位置淸0
+
+                        r--; //再多循环一次，查看后面是否有值与替换后的值相同
+
+                    } else if (arr[r][c] == arr[next][c]) {
+
+                        arr[r][c] *= 2;
+
+                        arr[next][c] = 0;
+
+                        obj.score += arr[r][c];
+
+                    }
+
+                }
+            },
+
+            moveUp: function () {
+
+                obj.move(function () {
+
+                    for (c = 0; c < obj.CELL; c++) {
+
+                        obj.dealToUp(c);
+
+                    }
+
+                })
+
+            },
+
+            //下按键处理
+
+            dealToDown: function () {
+
+                var next;
+
+                for (r = obj.ROW - 1; r >= 0; r--) {
+
+                    next = obj.find(r, c, r - 1, 0, -1); //找到第一个不为0的位置
+
+                    if (next == null) {
+
+                        break;
+
+                    }
+
+                    //如果当前位置为0
+
+                    if (arr[r][c] == 0) {
+
+                        arr[r][c] == arr[next][c]; //把找到的不为0的数值替换当前位置的值
+
+                        arr[next][c] == 0; //找到的位置淸0
+
+                        r++; //再多循环一次，查看后面是否有值与替换后的值相同 
+
+                    } else if (arr[r][c] == arr[next][c]) {
+
+                        arr[r][c] *= 2;
+
+                        arr[next][c] = 0;
+
+                        obj.score += arr[r][c];
+
+                    }
+
+                }
+
+            },
+
+            moveDown: function () {
+
+                obj.move(function () {
+
+                    for (c = 0; c < obj.CELL; c++) {
+
+                        obj.delToDown(c);
+
+                    }
+
+                })
+
+            }
+
+        }
+
+        window.onload = function () {
+
+            obj.createEle = 1;
+
+            obj.gameStart();
+
+        }
+
+        //切换模式
+
+        function getModel(e) { //事件冒泡获取a元素
+
+            var a = e.target,
+
+                modelValue = 4;
+
+            if (a.nodeName == 'A') {
+
+                if (a.innerHTML == '3X3') {
+
+                    modelValue = 3;
+
+                } else if (a.innerHTML == '4x4') {
+
+                    modelValue = 4;
+
+                } else if (a.innerHTML == '5X5') {
+
+                    modelValue = 5;
+
+                } else if (a.innerHTML == '6X6') {
+
+                    modelValue = 6;
+
+                }
+
+                obj.ROW = obj.CELL = modelValue;
+
+                obj.createEle = 1; //需要创建格子div元素的标志
+
+                obj.gameStart();
 
             }
 
