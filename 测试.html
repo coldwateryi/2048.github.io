@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>2048-game</title>
+    <style media='screen'>
+        #game {
+
+            display: none;
+
+            position: absolute;
+
+            left: 0px;
+
+            top: 0px;
+
+            right: 0px;
+
+            bottom: 0px;
+
+            background-color: #bbbbbb;
+
+            opacity: 0.5;
+
+            z-index: 1;
+
+        }
+
+        .head {
+
+            width: 480px;
+
+            height: 50px;
+
+            margin: 0 auto;
+
+            font-size: 25px;
+
+        }
+
+        .clear::after {
+
+            content: '';
+
+            display: block;
+
+            clear: both;
+
+        }
+
+        .left {
+
+            float: left;
+
+        }
+
+        .right {
+
+            float: right;
+
+        }
+
+        .scoreShow {
+
+            height: 50px;
+
+            text-align: center;
+
+            line-height: 50px;
+
+        }
+
+        .model {
+
+            text-decoration: none;
+
+            color: white;
+
+            background: #000;
+
+            font-size: 30px;
+
+            border-radius: 10px;
+        }
+
+        #gridPanel {
+
+            width: 480px;
+
+            height: 480px;
+
+            margin: 0 auto;
+
+            background-color: antiquewhite;
+
+            border-radius: 10px;
+
+            position: relative;
+
+            z-index: 1;
+        }
+
+        .grid,
+
+        .cell {
+
+            width: 100px;
+
+            height: 100px;
+
+            border-radius: 6px;
+
+        }
+
+        .grid {
+
+            background-color: #ccc0b3;
+
+            float: left;
+
+            margin: 16px 0 0 16px;
+
+        }
+
+        .cell {
+
+            position: absolute;
+
+            font-size: 60px;
+
+            text-align: center;
+
+            line-height: 100px;
+
+            color: #fff;
+
+        }
+
+        .n2 {
+
+            background-color: #eee3da
+        }
+
+
+
+        .n4 {
+
+            background-color: #ede0c8
+        }
+
+
+
+        .n8 {
+
+            background-color: #f2b179
+        }
+
+
+
+        .n16 {
+
+            background-color: #f59563
+        }
+
+
+
+        .n32 {
+
+            background-color: #f67c5f
+        }
+
+
+
+        .n64 {
+
+            background-color: #f65e3b
+        }
+
+
+
+        .n128 {
+
+            background-color: #edcf72
+        }
+
+
+
+        .n256 {
+
+            background-color: #edcc61
+        }
+
+
+
+        .n512 {
+
+            background-color: #9c0
+        }
+
+
+
+        .n1024 {
+
+            background-color: #33b5e5
+        }
+
+
+
+        .n2048 {
+
+            background-color: #09c
+        }
+
+
+
+        .n4096 {
+
+            background-color: #a6c
+        }
+
+
+
+        .n8192 {
+
+            background-color: #93c
+        }
+
+        .n2,
+
+        .n4 {
+
+            color: #776e65
+        }
+
+        #gameover {
+
+            width: 100%;
+
+            display: none;
+
+            position: fixed;
+
+            left: 50%;
+
+            right: 50%;
+
+            top: 150px;
+
+            width: 220px;
+
+            height: 220px;
+
+            border-radius: 10px;
+
+            background-color: #fff;
+
+            margin-left: -110px;
+
+            text-align: center;
+
+            z-index: 2;
+
+        }
+
+        #again {
+
+            display: inline-block;
+
+            width: 170px;
+
+            height: 50px;
+
+            border-radius: 10px;
+
+            text-decoration: none;
+
+            background-color: #bbbbbb;
+
+            color: #fff;
+
+            font-size: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id='game'>
+
+    </div>
+    <div class='head clear'>
+
+        <div class='scoreShow left'>
+
+            <span>分数：</span>
+
+            <span id='score'></span>
+
+        </div>
+
+        <div class='selction right' onclick='getModel(event)'>
+
+            <a href="#" class='model' value='3'>3X3</a>
+
+            <a href="#" class='model' value='4'>4X4</a>
+
+            <a href="#" class='model' value='5'>5X5</a>
+
+            <a href="#" class='model' value='6'>6X6</a>
+
+        </div>
+
+    </div>
+
+    <div id='gridPanel'>
+
+    </div>
+
+    <div id='gameover'>
+
+        <h1 id='Score'></h1>
+
+        <a href="#" id='again' onclick='obj.gameStart()'>再试一次</a>
+
+    </div>
+
+    <script text='text/javascript'>
+        var arr = [];
+
+        function $(id) {
+
+            return document.getElementById(id);
+
+        }
+
+        function C(clas) {
+
+            return document.getElementsByClassName(clas);
+
+        }
+
+        var obj = {
+
+            ROW: 4,
+
+            CELL: 4,
+
+            r: 0, //行
+
+            c: 0, //列
+
+            f: 0, //查找的下一位置 
+
+            keyCd: 0,
+
+            score: 0,
+
+            createEle: 0, //是否创建元素
+
+            eleFragment: '', //文档片段变量
+
+
+
+            //开始游戏
+
+            gameStart: function () {
+
+                obj.init();
+
+                document.onkeydown = function (e) { //自动获取事件对象
+
+                    switch (e.keyCode) { //判断按键
+
+                        case 37:
+
+                            obj.keyCd = 1;
+
+                            obj.moveLeft();
+
+                            break;
+
+                        case 38:
+
+                            obj.keyCd = 2;
+
+                            obj.moveUp();
+
+                            break;
+
+                        case 39:
+
+                            obj.keyCd = 1;
+
+                            obj.moveRight();
+
+                            break;
+
+                        case 40:
+
+                            obj.keytCd = 2;
+
+                            obj.moveDown();
+
+                            break;
+                    }
+
+                    $('score').innerHTML = obj.score; //分数更新
+                }
+
+            },
+
+            //初始化
+
+            init: function () {
+
+                obj.eleFragment = ducument.createDocumentFragment();
+
+                for (r = 0; r < obj.ROW; r++) {
+
+                    arr.push([]);
+
+                    for (c = 0; c < obj.CELL; c++) {
+
+                        arr[r][c] = 0;
+
+                        if (obj.createEle == 1) {
+
+                            obj.create(r, c);
+
+                        }
+
+                    }
+
+                }
+
+                if (obj.createEle == 1) {
+
+                    obj.createEle = 0;
+
+                    $('gridPanel').innerHTML = ''; //清除原有元素
+
+                    $('grilPanel').appendChild(obj.eleFragment); //添加元素
+
+                }
+
+                obj.score = 0;
+
+                $('score').innerHTML = obj.score;
+
+                $('game').style.display = 'none';
+
+                obj.random(); //开始游戏随机生成两个数
+
+                obj.random();
+
+                obj.updateView();
+
+            },
+            //创建div， 添加到gridPanel中
+
+            create: function (r, c) {
+
+                var grid, cell;
+
+                var increment = 14;
+
+                grWidth, grHeight, grMarginTop, grMarginLeft, ceWidth, ceHight;
+
+                grid = document.createElement('div');
+
+                grid = document.createElement('div');
+
+                grid.id = 'g' + r + c;
+
+                gird.className = 'grid';
+
+                cell.id = 'c' + r + c;
+
+                cekk.className = 'cell';
+
+                if (obj.ROW == 3) {
+
+                    increment = 24;
+
+                } else if (obj.ROW == 4) {
+
+                    increment = 18;
+
+                }
+
+                grWidth = grHeight = ceWidth = ceHight = 66 + (6 - obj.ROW) * increment;
+
+                grMarginTop = grMarginLeft = (480 - grWidth * obj.ROW) / (obj.ROW + 1);
+
+                grid.style.width = grWidth + "px";
+
+                grid.style.height = grHeight + "px";
+
+                grid.style.marginTop = grMarginTop + "px";
+
+                grid.style.marginLeft = grMarginLeft + "px";
+
+                cell.style.width = ceWidth + "px";
+
+                cell.style.height = ceHight + "px";
+
+                cell.style.top = grMarginTop + r * (grMarginTop + ceWidth) + "px";
+
+                cell.style.left = grMarginLeft + c * (grMarginLeft + ceHight) + "px";
+
+                cell.style.lineHeight = ceHight + "px";
+
+                cell.style.fontSize = 30 + (6 - obj.ROW) * 10 + "px";
+
+                obj.eleFragment.appendChild(grid);
+
+                obj.eleFragment.appendChild(cell);
+
+            },
+
+            //随机产生一个新数
+
+            random: function () {
+
+                while (1) {
+
+                    var row = Math.floor(Math.random() * obj.ROW);
+
+                    var cell = Math.floor(Math.random() * obj.CELL);
+
+                    if (arr[row][cell] == 0) { //判断生成的随机数位置为0才随机生成2或4
+
+                        arr[row][cell] = (Math.random() > 0.5) ? 4 : 2;
+
+                        break;
+
+                    }
+
+                }
+
+            },
+
+            //更新页面
+
+            updateView: function () {
+
+                var win = 0;
+
+                for (r = 0; r < obj.ROW; r++) {
+
+                    for (r = 0; r < obj.CELL; r++) {
+
+                        if (arr[r][c] == 0) { //值为0不显示
+
+                            $('c' + r + c).innerHTML = '';
+
+                            $('c' + r + c).className = 'cell'; //改变样式
+
+                        } else {
+
+                            $('c' + r + c).innerHTML = arr[r][c];
+
+                            $('c' + r + c).className = 'cell n' + arr[r][c]; //改变不同数字背景颜色
+
+                            if (obj.ROW == 3 && arr[r][c] == 1024) {
+
+                                win = 1;
+
+                            } else if (obj.ROW == 4 && arr[r][c] == 2048) {
+
+                                win = 1;
+
+                            } else if (obj.ROW == 5 && arr[r][c] == 4096) {
+
+                                win = 1;
+
+                            } else if (obj.ROW == 6 && arr[r][c] == 8192) {
+
+                                win = 1;
+
+                            }
+
+                        }
+
+                    }
+
+                }
+                //通关
+
+                if (win == 1) {
+
+                    $('game').style.display = 'block';
+
+                    $('gameover').style.display = 'block';
+
+                    $('Score').innerHTML = '你赢了<br>分数：' + obj.score;
+                }
+
+                //游戏失败
+
+                if (obj.isGameOver()) {
+
+                    $('game').style.display = 'block';
+
+                    $('gameover').style.display = 'block';
+
+                    $('Score').innerHTML = '失败了<br>分数：' + obj.score;
+
+                    console.log('gameover');
+                    
+                }
+          
+            },
+
+            //游戏失败
+
+            isGameOver: function() {
+                
+                for (r = 0; r< obj.ROW; r++) {
+
+                    for(c = 0; c<obj.CELL; c++) {
+
+                        if(arr[r][c] == 0) {//只要有0,游戏不失败
+
+                            return false;
+                        
+                        } else if (c != obj.CELL - 1 && arr[r][c] == arr[r][c + 1]) { //左往右  前一个和下一个不相等
+
+                            return false;
+
+                        } else if (r != obj.ROW - 1 && arr[r][c] == arr[r + 1][c] ){ //上往下 上一个和下一个不相等
+                            
+                            return false;
+
+                        }
+
+                    }
+
+                }
+
+                return true;
+                
+            },
+
+            find: function(r, c, start, condition, durection) {
+
+                if(obj.keyCd == 2) {//上下按键
+
+                    if(direction == 1) {//向上按键 f++
+
+                        for(var f = start; f< conditon; f += direction) {
+
+                            if(arr[f][c] != 0) {
+
+                                return f;
+                                
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    </script>
+
+</body>
+
+</html>
